@@ -10,11 +10,10 @@ import pickle
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 
 # Set and run network
-#network_type = "basic"
+# network_type = "basic"
 # network_type = "improved"
-#network_type = "advanced"
-
-network_type = "keras"
+# network_type = "keras"
+network_type = "keras CNN"
 
 # Run code
 if network_type == "basic":
@@ -24,8 +23,7 @@ if network_type == "basic":
     # Initialize basic network
     net = network.Network([784,30,10])
     net.SGD(training_data, 30, 10, 1.0, test_data=test_data)
-    
-    
+   
 elif network_type == "improved":
 
     import lib.network_improved as network
@@ -141,6 +139,84 @@ elif network_type == "keras":
                 learning_rate = .05,
                 epochs = 300,
                 batch_size = 12500,
+                validation_data = (x_test,y_test))
+        
+        # Save
+        net.save(filename)
+        
+        plot_img(x_test,y_test,net)
+        
+    else:
+        
+        plot_img(x_test,y_test,net)
+      
+elif network_type == "keras CNN":
+    
+    import lib.network_keras_CNN as network
+    import keras
+    
+    def plot_img(x_test,y_test,net_model):
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        plt.ion()
+        plt.show()
+        
+        read_number = net_model.predict(x_test)
+        read_number = np.argmax(read_number,axis=1)
+        
+        # Test model
+        for i in range(1000):
+            x = x_test[i]
+            y = np.argmax(y_test[i])
+            x = x.reshape((28,28))
+            read_y = read_number[i]
+            ax.imshow(x,cmap="binary")
+            ax.set_title("Digit: %d - Read digit: %d" %(y,read_y))
+            if y==read_y:
+                continue
+            input()
+            ax.clear()
+    
+    filename = "model/keras CNN.bin"
+    
+    # Format the data in the keras format
+    [x_train,y_train] = list(zip(*training_data))
+    [x_test,y_test] = list(zip(*test_data))
+    x_train = np.array(list(x_train)).reshape((len(x_train),28*28))
+    y_train = np.array(list(y_train)).reshape((len(x_train),10))
+    x_test = np.array(list(x_test)).reshape((len(x_test),28*28))
+    y_test = np.array(keras.utils.to_categorical(y_test, 10))
+    
+    img_rows, img_cols = 28,28
+    
+    if keras.backend.image_data_format() == 'channels_first': 
+       x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols) 
+       x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols) 
+       input_shape = (1, img_rows, img_cols) 
+    else: 
+       x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1) 
+       x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1) 
+       input_shape = (img_rows, img_cols, 1) 
+    
+    
+    train = False
+    train_new = False
+    train = True
+    train_new = True
+    net = network.Network()
+    if train_new:
+        net.build(input_shape)
+    else:
+        net.load(filename)
+    
+    if train:
+        
+        net.SGD(x_train,y_train,
+                learning_rate = .05,
+                epochs = 20,
+                batch_size = 300,
                 validation_data = (x_test,y_test))
         
         # Save
